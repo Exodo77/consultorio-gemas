@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Historia Clínica para {{ patient.name }}</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; background-color: #f4f4f4; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h1 { color: #0056b3; }
+        form div { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input[type="date"], input[type="text"], textarea {
+            width: calc(100% - 22px);
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            resize: vertical;
+        }
+        textarea { min-height: 80px; }
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #28a745;
+            color: white;
+            text-decoration: none;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+        .button:hover { background-color: #218838; }
+        .cancel-button {
+            background-color: #6c757d;
+        }
+        .cancel-button:hover {
+            background-color: #5a6268;
+        }
+        .back-link {
+            display: block;
+            margin-top: 20px;
+            color: #007bff;
+            text-decoration: none;
+        }
+        .back-link:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Editar Historia Clínica para {{ patient.name }}</h1>
+        <form method="post">
+            <div>
+                <label for="record_date">Fecha de la Consulta:</label>
+                <input type="date" id="record_date" name="record_date" value="{{ record.record_date }}" required>
+            </div>
+            <div>
+                <label for="reason">Motivo de la Consulta:</label>
+                <textarea id="reason" name="reason" required>{{ record.reason }}</textarea>
+            </div>
+            <div>
+                <label for="diagnosis">Diagnóstico:</label>
+                <textarea id="diagnosis" name="diagnosis">{{ record.diagnosis }}</textarea>
+            </div>
+            <div>
+                <label for="treatment">Tratamiento:</label>
+                <textarea id="treatment" name="treatment">{{ record.treatment }}</textarea>
+            </div>
+            <div>
+                <label for="notes">Notas Adicionales:</label>
+                <textarea id="notes" name="notes">{{ record.notes }}</textarea>
+            </div>
+            <button type="submit" class="button">Guardar Cambios</button>
+            <a href="{{ url_for('patient_details', patient_id=patient.id) }}" class="button cancel-button">Cancelar</a>
+        </form>
+    </div>
+</body>
+</html>

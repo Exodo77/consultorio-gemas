@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalles del Paciente: {{ patient.name }}</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; background-color: #f4f4f4; color: #333; }
+        .container { max-width: 800px; margin: 0 auto; background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h1, h2 { color: #0056b3; }
+        p { margin-bottom: 5px; }
+        .button {
+            display: inline-block;
+            padding: 8px 15px; /* Ajustado para más compactos */
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 15px;
+            margin-right: 10px;
+            border: none; /* Añadido para botones */
+            cursor: pointer; /* Añadido para botones */
+        }
+        .button:hover { background-color: #0056b3; }
+        .delete-button {
+            background-color: #dc3545;
+        }
+        .delete-button:hover {
+            background-color: #c82333;
+        }
+        .edit-button {
+            background-color: #ffc107;
+            color: #333;
+        }
+        .edit-button:hover {
+            background-color: #e0a800;
+        }
+        .medical-record {
+            background-color: #e9e9e9;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            border-left: 5px solid #007bff;
+            display: flex; /* Para alinear botones */
+            flex-direction: column; /* Apila contenido y luego botones */
+        }
+        .medical-record h3 { margin-top: 0; color: #0056b3; }
+        .medical-record p { margin: 5px 0; }
+        .record-actions {
+            margin-top: 10px;
+            text-align: right;
+        }
+        .back-link {
+            display: block;
+            margin-top: 20px;
+            color: #007bff;
+            text-decoration: none;
+        }
+        .back-link:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Detalles del Paciente: {{ patient.name }}</h1>
+        <p><strong>Fecha de Nacimiento:</strong> {{ patient.dob }}</p>
+        <p><strong>Género:</strong> {{ patient.gender }}</p>
+        <p><strong>Dirección:</strong> {{ patient.address }}</p>
+        <p><strong>Teléfono:</strong> {{ patient.phone }}</p>
+        <p><strong>Email:</strong> {{ patient.email }}</p>
+
+        <a href="{{ url_for('edit_patient', patient_id=patient.id) }}" class="button edit-button">Editar Datos del Paciente</a>
+        <form action="{{ url_for('delete_patient', patient_id=patient.id) }}" method="post" style="display:inline;">
+            <button type="submit" class="button delete-button" onclick="return confirm('¿Estás seguro de que quieres eliminar a este paciente y todas sus historias clínicas?');">Eliminar Paciente</button>
+        </form>
+        <a href="{{ url_for('add_medical_record', patient_id=patient.id) }}" class="button">Añadir Historia Clínica</a>
+        <a href="{{ url_for('index') }}" class="button">Volver a la lista de pacientes</a>
+
+        <hr>
+
+        <h2>Historias Clínicas</h2>
+        {% if medical_records %}
+            {% for record in medical_records %}
+                <div class="medical-record">
+                    <h3>Consulta del {{ record.record_date }}</h3>
+                    <p><strong>Motivo:</strong> {{ record.reason }}</p>
+                    <p><strong>Diagnóstico:</strong> {{ record.diagnosis }}</p>
+                    <p><strong>Tratamiento:</strong> {{ record.treatment }}</p>
+                    <p><strong>Notas:</strong> {{ record.notes }}</p>
+                    <div class="record-actions">
+                        <a href="{{ url_for('edit_medical_record', record_id=record.id) }}" class="button edit-button">Editar</a>
+                        <form action="{{ url_for('delete_medical_record', record_id=record.id) }}" method="post" style="display:inline;">
+                            <button type="submit" class="button delete-button" onclick="return confirm('¿Estás seguro de que quieres eliminar esta historia clínica?');">Eliminar</button>
+                        </form>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p>No hay historias clínicas para este paciente aún.</p>
+        {% endif %}
+    </div>
+</body>
+</html>

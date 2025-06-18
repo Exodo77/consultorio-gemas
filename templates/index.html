@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consultorio - Pacientes</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; background-color: #f4f4f4; color: #333; }
+        .container { max-width: 800px; margin: 0 auto; background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h1 { color: #0056b3; }
+        .search-form { margin-bottom: 20px; display: flex; }
+        .search-form input[type="text"] {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px 0 0 4px;
+            font-size: 16px;
+        }
+        .search-form button {
+            padding: 10px 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 0 4px 4px 0;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .search-form button:hover { background-color: #0056b3; }
+
+        ul { list-style: none; padding: 0; }
+        li { background-color: #e9e9e9; margin-bottom: 10px; padding: 10px; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; }
+        li a { text-decoration: none; color: #007bff; font-weight: bold; }
+        li a:hover { text-decoration: underline; }
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 20px;
+            border: none; /* Asegura que se vea como un botón si está dentro de un form */
+            cursor: pointer;
+        }
+        .button:hover { background-color: #0056b3; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Lista de Pacientes</h1>
+        
+        <form action="{{ url_for('index') }}" method="get" class="search-form">
+            <input type="text" name="search" placeholder="Buscar paciente por nombre..." value="{{ search_query }}">
+            <button type="submit">Buscar</button>
+        </form>
+
+        <a href="{{ url_for('add_patient') }}" class="button">Añadir Nuevo Paciente</a>
+        <hr>
+        {% if patients %}
+            <ul>
+                {% for patient in patients %}
+                    <li>
+                        <span>{{ patient.name }} ({{ patient.dob }})</span>
+                        <a href="{{ url_for('patient_details', patient_id=patient.id) }}">Ver Detalles</a>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No hay pacientes registrados aún, o no se encontraron resultados para "{{ search_query }}".</p>
+        {% endif %}
+    </div>
+</body>
+</html>
