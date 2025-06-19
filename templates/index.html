@@ -39,7 +39,7 @@
                 <td>{{ patient.phone }}</td>
                 <td>{{ patient.email }}</td>
                 <td class="text-center">
-                    {# AÑADE mb-1 A ESTOS BOTONES #}
+                    {# AÑADIR mb-1 A ESTOS BOTONES #}
                     <a href="{{ url_for('patient_details', patient_id=patient.id) }}" class="btn btn-info btn-sm mb-1">Detalles</a>
                     <a href="{{ url_for('edit_patient', patient_id=patient.id) }}" class="btn btn-warning btn-sm mb-1">Editar</a>
                     <form action="{{ url_for('delete_patient', patient_id=patient.id) }}" method="POST" class="d-inline">
