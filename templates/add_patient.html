@@ -4,78 +4,37 @@
 
 {% block content %}
 <h1 class="mb-4">Añadir Nuevo Paciente</h1>
-<form method="post" class="needs-validation" novalidate>
-    {# Esto es crucial para Flask-WTF: genera un token CSRF para seguridad #}
-    {{ form.csrf_token }}
-
+<form method="post">
     <div class="mb-3">
-        {{ form.name.label(class="form-label") }}
-        {{ form.name(class="form-control", placeholder="Nombre completo", required=true) }} {# Añadido required=true para validación HTML5 #}
-        {% if form.name.errors %}
-            <div class="invalid-feedback d-block"> {# d-block para mostrar siempre #}
-                {% for error in form.name.errors %}
-                    {{ error }}
-                {% endfor %}
-            </div>
-        {% endif %}
+        <label for="name" class="form-label">Nombre:</label>
+        <input type="text" class="form-control" id="name" name="name" required>
     </div>
     <div class="mb-3">
-        {{ form.dob.label(class="form-label") }}
-        {{ form.dob(class="form-control") }}
-        {% if form.dob.errors %}
-            <div class="invalid-feedback d-block">
-                {% for error in form.dob.errors %}
-                    {{ error }}
-                {% endfor %}
-            </div>
-        {% endif %}
+        <label for="dob" class="form-label">Fecha de Nacimiento:</label>
+        <input type="date" class="form-control" id="dob" name="dob">
     </div>
     <div class="mb-3">
-        {{ form.gender.label(class="form-label") }}
-        {{ form.gender(class="form-select") }}
-        {% if form.gender.errors %}
-            <div class="invalid-feedback d-block">
-                {% for error in form.gender.errors %}
-                    {{ error }}
-                {% endfor %}
-            </div>
-        {% endif %}
+        <label for="gender" class="form-label">Género:</label>
+        <select class="form-select" id="gender" name="gender">
+            <option value="">Seleccionar</option>
+            <option value="Masculino">Masculino</option>
+            <option value="Femenino">Femenino</option>
+            <option value="Otro">Otro</option>
+        </select>
     </div>
     <div class="mb-3">
-        {{ form.address.label(class="form-label") }}
-        {{ form.address(class="form-control", placeholder="Dirección del paciente") }}
-        {% if form.address.errors %}
-            <div class="invalid-feedback d-block">
-                {% for error in form.address.errors %}
-                    {{ error }}
-                {% endfor %}
-            </div>
-        {% endif %}
+        <label for="address" class="form-label">Dirección:</label>
+        <input type="text" class="form-control" id="address" name="address">
     </div>
     <div class="mb-3">
-        {{ form.phone.label(class="form-label") }}
-        {{ form.phone(class="form-control", placeholder="Ej: +5491123456789") }}
-        {% if form.phone.errors %}
-            <div class="invalid-feedback d-block">
-                {% for error in form.phone.errors %}
-                    {{ error }}
-                {% endfor %}
-            </div>
-        {% endif %}
+        <label for="phone" class="form-label">Teléfono:</label>
+        <input type="text" class="form-control" id="phone" name="phone">
     </div>
     <div class="mb-3">
-        {{ form.email.label(class="form-label") }}
-        {{ form.email(class="form-control", placeholder="correo@ejemplo.com") }}
-        {% if form.email.errors %}
-            <div class="invalid-feedback d-block">
-                {% for error in form.email.errors %}
-                    {{ error }}
-                {% endfor %}
-            </div>
-        {% endif %}
+        <label for="email" class="form-label">Email:</label>
+        <input type="email" class="form-control" id="email" name="email">
     </div>
-
     <button type="submit" class="btn btn-primary">Guardar Paciente</button>
-    <a href="{{ url_for('index') }}" class="btn btn-secondary ms-2">Cancelar</a>
+    <a href="{{ url_for('index') }}" class="btn btn-secondary ms-2">Cancelar</a> {# ms-2 añade margen a la izquierda #}
 </form>
 {% endblock %}
