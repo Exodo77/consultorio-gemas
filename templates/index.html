@@ -22,11 +22,71 @@
     <table class="table table-hover table-striped">
         <thead>
             <tr>
-                <th>Nombre</th>
-                <th>Fecha de Nacimiento</th>
-                <th>Género</th>
-                <th>Teléfono</th>
-                <th>Email</th>
+                {# Encabezado Nombre - Ordenamiento #}
+                <th>
+                    <a href="{{ url_for('index', page=page, per_page=per_page, search=search_query, sort_by='name', order=('desc' if sort_by == 'name' and order == 'ASC' else 'asc')) }}" class="text-decoration-none text-dark">
+                        Nombre
+                        {% if sort_by == 'name' %}
+                            {% if order == 'ASC' %}
+                                <i class="bi bi-arrow-up"></i> {# Flecha arriba para ascendente #}
+                            {% else %}
+                                <i class="bi bi-arrow-down"></i> {# Flecha abajo para descendente #}
+                            {% endif %}
+                        {% endif %}
+                    </a>
+                </th>
+                {# Encabezado Fecha de Nacimiento - Ordenamiento #}
+                <th>
+                    <a href="{{ url_for('index', page=page, per_page=per_page, search=search_query, sort_by='dob', order=('desc' if sort_by == 'dob' and order == 'ASC' else 'asc')) }}" class="text-decoration-none text-dark">
+                        Fecha de Nacimiento
+                        {% if sort_by == 'dob' %}
+                            {% if order == 'ASC' %}
+                                <i class="bi bi-arrow-up"></i>
+                            {% else %}
+                                <i class="bi bi-arrow-down"></i>
+                            {% endif %}
+                        {% endif %}
+                    </a>
+                </th>
+                {# Encabezado Género - Ordenamiento #}
+                <th>
+                    <a href="{{ url_for('index', page=page, per_page=per_page, search=search_query, sort_by='gender', order=('desc' if sort_by == 'gender' and order == 'ASC' else 'asc')) }}" class="text-decoration-none text-dark">
+                        Género
+                        {% if sort_by == 'gender' %}
+                            {% if order == 'ASC' %}
+                                <i class="bi bi-arrow-up"></i>
+                            {% else %}
+                                <i class="bi bi-arrow-down"></i>
+                            {% endif %}
+                        {% endif %}
+                    </a>
+                </th>
+                {# Encabezado Teléfono - Ordenamiento #}
+                <th>
+                    <a href="{{ url_for('index', page=page, per_page=per_page, search=search_query, sort_by='phone', order=('desc' if sort_by == 'phone' and order == 'ASC' else 'asc')) }}" class="text-decoration-none text-dark">
+                        Teléfono
+                        {% if sort_by == 'phone' %}
+                            {% if order == 'ASC' %}
+                                <i class="bi bi-arrow-up"></i>
+                            {% else %}
+                                <i class="bi bi-arrow-down"></i>
+                            {% endif %}
+                        {% endif %}
+                    </a>
+                </th>
+                {# Encabezado Email - Ordenamiento #}
+                <th>
+                    <a href="{{ url_for('index', page=page, per_page=per_page, search=search_query, sort_by='email', order=('desc' if sort_by == 'email' and order == 'ASC' else 'asc')) }}" class="text-decoration-none text-dark">
+                        Email
+                        {% if sort_by == 'email' %}
+                            {% if order == 'ASC' %}
+                                <i class="bi bi-arrow-up"></i>
+                            {% else %}
+                                <i class="bi bi-arrow-down"></i>
+                            {% endif %}
+                        {% endif %}
+                    </a>
+                </th>
                 <th class="text-center">Acciones</th>
             </tr>
         </thead>
@@ -51,12 +111,12 @@
     </table>
 </div>
 
-{# Paginación #}
+{# Paginación (sin cambios, ya incluye search_query) #}
 <nav aria-label="Paginación de pacientes">
     <ul class="pagination justify-content-center">
         {# Botón Anterior #}
         <li class="page-item {% if page == 1 %}disabled{% endif %}">
-            <a class="page-link" href="{{ url_for('index', page=page-1, search=search_query) }}" aria-label="Anterior">
+            <a class="page-link" href="{{ url_for('index', page=page-1, search=search_query, sort_by=sort_by, order=order) }}" aria-label="Anterior">
                 <span aria-hidden="true">&laquo;</span>
             </a>
         </li>
@@ -64,13 +124,13 @@
         {# Enlaces a cada página #}
         {% for p in range(1, total_pages + 1) %}
             <li class="page-item {% if p == page %}active{% endif %}">
-                <a class="page-link" href="{{ url_for('index', page=p, search=search_query) }}">{{ p }}</a>
+                <a class="page-link" href="{{ url_for('index', page=p, search=search_query, sort_by=sort_by, order=order) }}">{{ p }}</a>
             </li>
         {% endfor %}
 
         {# Botón Siguiente #}
         <li class="page-item {% if page == total_pages %}disabled{% endif %}">
-            <a class="page-link" href="{{ url_for('index', page=page+1, search=search_query) }}" aria-label="Siguiente">
+            <a class="page-link" href="{{ url_for('index', page=page+1, search=search_query, sort_by=sort_by, order=order) }}" aria-label="Siguiente">
                 <span aria-hidden="true">&raquo;</span>
             </a>
         </li>
