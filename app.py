@@ -16,7 +16,9 @@ DATABASE_URL = os.environ.get('DATABASE_URL')
 
 def connect_db():
     if not DATABASE_URL:
-        print("ADVERTENCIA: DATABASE_URL no está configurada. Intentando conexión local de prueba.")
+        # Mensaje más claro para el entorno local si DATABASE_URL no está configurada
+        print("ADVERTENCIA: La variable de entorno 'DATABASE_URL' no está configurada.")
+        print("Para ejecutar localmente, configúrala (ej. en PowerShell: $env:DATABASE_URL='postgres://user:pass@host:port/dbname')")
         raise ValueError("DATABASE_URL no está configurada. Necesaria para la conexión a PostgreSQL.")
 
     conn = psycopg2.connect(DATABASE_URL)
@@ -109,7 +111,10 @@ def logout():
 @app.route('/')
 @login_required
 def index():
-    cur_db, conn = get_db() # 'cur' renombrado a 'cur_db' para evitar conflicto con 'cur' en otros bloques
+    # --- CAMBIO IMPORTANTE AQUÍ: Obtener la conexión y luego el cursor ---
+    conn = get_db()
+    cur_db = conn.cursor()
+    # --- FIN CAMBIO ---
 
     # Parámetros de paginación
     page = request.args.get('page', 1, type=int)
@@ -144,8 +149,10 @@ def index():
         total_patients = 0
         total_pages = 0
     finally:
-        if cur_db: cur_db.close()
-        # conn.close() # No cierres la conexión aquí, la gestiona @app.teardown_appcontext
+        # El cursor debe cerrarse explícitamente si se abrió dentro de la función.
+        # La conexión 'conn' es gestionada por @app.teardown_appcontext.
+        if cur_db:
+            cur_db.close()
 
 
     return render_template('index.html',
