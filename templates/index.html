@@ -5,15 +5,21 @@
 {% block content %}
 <h1 class="mb-4">Lista de Pacientes</h1>
 
-<form class="d-flex mb-4" role="search" method="GET">
-    <input class="form-control me-2" type="search" placeholder="Buscar paciente por nombre..." aria-label="Search" name="search" value="{{ search_query }}">
-    <button class="btn btn-outline-primary" type="submit">Buscar</button>
-</form>
-
-<a href="{{ url_for('add_patient') }}" class="btn btn-primary mb-3">Añadir Nuevo Paciente</a>
+{# Fila para el formulario de búsqueda y el botón de añadir paciente #}
+<div class="row mb-4 align-items-center"> {# align-items-center para alinear verticalmente #}
+    <div class="col-md-8 col-lg-9"> {# En pantallas medianas y grandes, ocupa 8 o 9 columnas #}
+        <form class="d-flex" role="search" method="GET">
+            <input class="form-control me-2" type="search" placeholder="Buscar paciente por nombre..." aria-label="Search" name="search" value="{{ search_query }}">
+            <button class="btn btn-outline-primary" type="submit">Buscar</button>
+        </form>
+    </div>
+    <div class="col-md-4 col-lg-3 text-md-end mt-2 mt-md-0"> {# En pantallas medianas, ocupa 4 o 3 columnas, texto alineado a la derecha, margen superior en móvil #}
+        <a href="{{ url_for('add_patient') }}" class="btn btn-primary w-100 w-md-auto">Añadir Nuevo Paciente</a> {# w-100 en móvil, w-md-auto en md y up #}
+    </div>
+</div>
 
 {% if patients %}
-    <div class="table-responsive">
+    <div class="table-responsive"> {# Esta clase es CRUCIAL para tablas responsivas #}
         <table class="table table-striped table-hover">
             <thead>
                 <tr>
@@ -34,11 +40,13 @@
                         <td>{{ patient.phone }}</td>
                         <td>{{ patient.email }}</td>
                         <td>
-                            <a href="{{ url_for('patient_details', patient_id=patient.id) }}" class="btn btn-info btn-sm me-1">Ver Detalles</a> {# me-1 añade un pequeño margen a la derecha #}
-                            <a href="{{ url_for('edit_patient', patient_id=patient.id) }}" class="btn btn-warning btn-sm me-1">Editar</a>
-                            <form action="{{ url_for('delete_patient', patient_id=patient.id) }}" method="POST" class="d-inline">
-                                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('¿Estás seguro de que quieres eliminar a este paciente y todos sus registros médicos?');">Eliminar</button>
-                            </form>
+                            <div class="d-flex flex-column flex-md-row"> {# Contenedor flexible para los botones, se apilan en móvil y se ponen en fila en md #}
+                                <a href="{{ url_for('patient_details', patient_id=patient.id) }}" class="btn btn-info btn-sm mb-1 me-md-1">Detalles</a>
+                                <a href="{{ url_for('edit_patient', patient_id=patient.id) }}" class="btn btn-warning btn-sm mb-1 me-md-1">Editar</a>
+                                <form action="{{ url_for('delete_patient', patient_id=patient.id) }}" method="POST" class="d-inline">
+                                    <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('¿Estás seguro de que quieres eliminar a este paciente y todos sus registros médicos?');">Eliminar</button>
+                                </form>
+                            </div>
                         </td>
                     </tr>
                 {% endfor %}
