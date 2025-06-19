@@ -8,18 +8,25 @@
     }
 
     .table {
-        font-size: 0.875em; /* Reduce ligeramente el tamaño de fuente de toda la tabla para ganar espacio */
+        font-size: 0.85em; /* Reduce ligeramente el tamaño de fuente de toda la tabla para ganar espacio */
     }
 
-    /* Estilos para la columna de acciones en pantallas pequeñas */
+    /* Estilos para las celdas de la tabla (td) para que el contenido no se desborde */
+    .table td {
+        white-space: normal; /* Permite que el texto se ajuste a múltiples líneas si es largo */
+        word-wrap: break-word; /* Rompe palabras largas si no caben en una línea */
+    }
+
+    /* Estilos específicos para la columna de acciones (la última <td> y <th>) */
     .table td:last-child,
     .table th:last-child {
-        min-width: 120px; /* Asegura un ancho mínimo para la columna de acciones */
-        white-space: nowrap; /* Evita que el texto de los botones se rompa */
-        text-align: center; /* Centra los botones en la celda si no ocupan todo el ancho */
+        min-width: 140px; /* Aumentado a 140px para asegurar espacio, puedes ajustarlo si es necesario. */
+        text-align: center; /* Centra los botones en la celda */
+        padding-left: 5px; /* Pequeño padding para no pegar al borde */
+        padding-right: 5px; /* Pequeño padding para no pegar al borde */
     }
 
-    /* Hacer que los botones de acción se apilen verticalmente en pantallas pequeñas */
+    /* Hacer que los botones de acción se apilen verticalmente y ocupen el 100% de la columna */
     .table td:last-child .btn {
         display: block; /* Cada botón será un bloque, apilándose verticalmente */
         width: 100%;    /* Ocupa el ancho completo de la celda */
@@ -29,7 +36,7 @@
     }
 
     /* Eliminar el margen inferior del último botón para que no haya espacio extra al final */
-    .table td:last-child .btn:last-child {
+    .table td:last-child .btn:last-of-type { /* Usamos :last-of-type para seleccionar el último botón directo, no el del form */
         margin-bottom: 0;
     }
 
@@ -37,7 +44,8 @@
     .table td:last-child form {
         display: block; /* Asegura que el formulario sea un bloque */
         width: 100%; /* El formulario ocupa el ancho completo */
-        margin-bottom: 5px; /* Espacio debajo del formulario si hay más elementos después (opcional, pero buena práctica) */
+        /* Eliminamos el margin-bottom aquí, ya que el botón dentro del form ya no lo necesita si el form es el último elemento en la celda apilada */
+        margin-bottom: 0;
     }
 
     .table td:last-child form .btn {
