@@ -3,39 +3,38 @@
 {% block title %}Añadir Paciente{% endblock %}
 
 {% block content %}
-<h2 class="mb-4">Añadir Nuevo Paciente</h2>
-
-<form method="post" action="{{ url_for('add_patient') }}">
+<h1 class="mb-4">Añadir Nuevo Paciente</h1>
+<form method="post">
     <div class="mb-3">
-        <label for="name" class="form-label">Nombre del Paciente:</label>
-        <input type="text" class="form-control" id="name" name="name" value="{{ patient.name if patient else '' }}" required>
+        <label for="name" class="form-label">Nombre:</label>
+        <input type="text" class="form-control" id="name" name="name" required>
     </div>
     <div class="mb-3">
         <label for="dob" class="form-label">Fecha de Nacimiento:</label>
-        <input type="date" class="form-control" id="dob" name="dob" value="{{ patient.dob if patient else '' }}" required>
+        <input type="date" class="form-control" id="dob" name="dob">
     </div>
     <div class="mb-3">
         <label for="gender" class="form-label">Género:</label>
-        <select class="form-select" id="gender" name="gender" required>
-            <option value="">Selecciona</option>
-            <option value="Masculino" {% if patient and patient.gender == 'Masculino' %}selected{% endif %}>Masculino</option>
-            <option value="Femenino" {% if patient and patient.gender == 'Femenino' %}selected{% endif %}>Femenino</option>
-            <option value="Otro" {% if patient and patient.gender == 'Otro' %}selected{% endif %}>Otro</option>
+        <select class="form-select" id="gender" name="gender">
+            <option value="">Seleccionar</option>
+            <option value="Masculino">Masculino</option>
+            <option value="Femenino">Femenino</option>
+            <option value="Otro">Otro</option>
         </select>
     </div>
     <div class="mb-3">
         <label for="address" class="form-label">Dirección:</label>
-        <input type="text" class="form-control" id="address" name="address" value="{{ patient.address if patient else '' }}">
+        <input type="text" class="form-control" id="address" name="address">
     </div>
     <div class="mb-3">
         <label for="phone" class="form-label">Teléfono:</label>
-        <input type="tel" class="form-control" id="phone" name="phone" value="{{ patient.phone if patient else '' }}">
+        <input type="text" class="form-control" id="phone" name="phone">
     </div>
     <div class="mb-3">
         <label for="email" class="form-label">Email:</label>
-        <input type="email" class="form-control" id="email" name="email" value="{{ patient.email if patient else '' }}">
+        <input type="email" class="form-control" id="email" name="email">
     </div>
-    <button type="submit" class="btn btn-primary">Añadir Paciente</button>
-    <a href="{{ url_for('index') }}" class="btn btn-secondary">Cancelar</a>
+    <button type="submit" class="btn btn-primary">Guardar Paciente</button>
+    <a href="{{ url_for('index') }}" class="btn btn-secondary ms-2">Cancelar</a> {# ms-2 añade margen a la izquierda #}
 </form>
 {% endblock %}

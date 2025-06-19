@@ -3,15 +3,14 @@
 {% block title %}Añadir Historia Clínica{% endblock %}
 
 {% block content %}
-<h2 class="mb-4">Añadir Historia Clínica para {{ patient.name }}</h2>
-
+<h1 class="mb-4">Añadir Historia Clínica para {{ patient.name }}</h1>
 <form method="post">
     <div class="mb-3">
-        <label for="record_date" class="form-label">Fecha:</label>
-        <input type="date" class="form-control" id="record_date" name="record_date" value="{{ today_date }}" required>
+        <label for="record_date" class="form-label">Fecha del Registro:</label>
+        <input type="date" class="form-control" id="record_date" name="record_date" required>
     </div>
     <div class="mb-3">
-        <label for="reason" class="form-label">Motivo de la consulta:</label>
+        <label for="reason" class="form-label">Razón de la Consulta:</label>
         <textarea class="form-control" id="reason" name="reason" rows="3"></textarea>
     </div>
     <div class="mb-3">
@@ -23,10 +22,10 @@
         <textarea class="form-control" id="treatment" name="treatment" rows="3"></textarea>
     </div>
     <div class="mb-3">
-        <label for="notes" class="form-label">Notas adicionales:</label>
+        <label for="notes" class="form-label">Notas:</label>
         <textarea class="form-control" id="notes" name="notes" rows="3"></textarea>
     </div>
     <button type="submit" class="btn btn-primary">Guardar Historia Clínica</button>
-    <a href="{{ url_for('patient_details', patient_id=patient.id) }}" class="btn btn-secondary">Cancelar</a>
+    <a href="{{ url_for('patient_details', patient_id=patient.id) }}" class="btn btn-secondary ms-2">Cancelar</a>
 </form>
 {% endblock %}

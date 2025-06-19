@@ -3,7 +3,6 @@ import os
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from functools import wraps
-import datetime # <--- ¡Añadir esta línea!
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'una_clave_secreta_facil_de_recordar_pero_insegura_para_prod' # ¡CAMBIA ESTO!
@@ -128,7 +127,7 @@ def index():
         # 1. Obtener el número total de pacientes (para calcular el total de páginas)
         if search_query:
             cur_db.execute('SELECT COUNT(*) FROM patients WHERE LOWER(name) LIKE %s',
-                            ('%' + search_query.lower() + '%',))
+                           ('%' + search_query.lower() + '%',))
         else:
             cur_db.execute('SELECT COUNT(*) FROM patients')
         total_patients = cur_db.fetchone()['count']
@@ -137,13 +136,13 @@ def index():
         # 2. Obtener los pacientes para la página actual
         if search_query:
             cur_db.execute('SELECT * FROM patients WHERE LOWER(name) LIKE %s ORDER BY name LIMIT %s OFFSET %s',
-                            ('%' + search_query.lower() + '%', per_page, offset))
+                           ('%' + search_query.lower() + '%', per_page, offset))
         else:
             cur_db.execute('SELECT * FROM patients ORDER BY name LIMIT %s OFFSET %s',
-                            (per_page, offset))
+                           (per_page, offset))
 
         patients = cur_db.fetchall()
-
+        
     except Exception as e:
         flash(f"Error al cargar pacientes: {e}", "danger")
         patients = [] # Si hay error, la lista de pacientes estará vacía
@@ -157,12 +156,12 @@ def index():
 
 
     return render_template('index.html',
-                            patients=patients,
-                            search_query=search_query,
-                            page=page,
-                            per_page=per_page,
-                            total_pages=total_pages,
-                            total_patients=total_patients)
+                           patients=patients,
+                           search_query=search_query,
+                           page=page,
+                           per_page=per_page,
+                           total_pages=total_pages,
+                           total_patients=total_patients)
 
 # --- Resto de tus rutas (sin cambios significativos, solo asegúrate de que @login_required esté ahí) ---
 
@@ -181,7 +180,7 @@ def add_patient():
         cursor = conn.cursor()
         try:
             cursor.execute('INSERT INTO patients (name, dob, gender, address, phone, email) VALUES (%s, %s, %s, %s, %s, %s)',
-                            (name, dob, gender, address, phone, email))
+                           (name, dob, gender, address, phone, email))
             conn.commit()
             flash('Paciente añadido exitosamente!', 'success')
             return redirect(url_for('index'))
@@ -228,10 +227,6 @@ def add_medical_record(patient_id):
     conn = get_db()
     cursor = conn.cursor()
 
-    # <--- INICIO DEL CAMBIO ---
-    today_date = datetime.date.today().isoformat() # Formato 'YYYY-MM-DD' para input type="date"
-    # <--- FIN DEL CAMBIO ---
-
     try:
         cursor.execute('SELECT * FROM patients WHERE id = %s', (patient_id,))
         patient = cursor.fetchone()
@@ -248,20 +243,18 @@ def add_medical_record(patient_id):
             notes = request.form['notes']
 
             cursor.execute('INSERT INTO medical_records (patient_id, record_date, reason, diagnosis, treatment, notes) VALUES (%s, %s, %s, %s, %s, %s)',
-                            (patient_id, record_date, reason, diagnosis, treatment, notes))
+                           (patient_id, record_date, reason, diagnosis, treatment, notes))
             conn.commit()
             flash('Historia clínica añadida exitosamente!', 'success')
             return redirect(url_for('patient_details', patient_id=patient_id))
-        except Exception as e:
-            conn.rollback()
-            flash(f"Error al añadir historia clínica: {e}", "danger")
-        finally:
-            if cursor: cursor.close()
-            # No cierres la conexión aquí, la gestiona @app.teardown_appcontext
+    except Exception as e:
+        conn.rollback()
+        flash(f"Error al añadir historia clínica: {e}", "danger")
+    finally:
+        if cursor: cursor.close()
+        # No cierres la conexión aquí, la gestiona @app.teardown_appcontext
 
-    # <--- INICIO DEL CAMBIO ---
-    return render_template('add_medical_record.html', patient=patient, today_date=today_date) # Pasar today_date aquí
-    # <--- FIN DEL CAMBIO ---
+    return render_template('add_medical_record.html', patient=patient)
 
 @app.route('/edit_patient/<int:patient_id>', methods=('GET', 'POST'))
 @login_required
@@ -292,11 +285,11 @@ def edit_patient(patient_id):
             conn.commit()
             flash('Paciente actualizado exitosamente!', 'success')
             return redirect(url_for('patient_details', patient_id=patient_id))
-        except Exception as e:
-            conn.rollback()
-            flash(f"Error al editar paciente: {e}", "danger")
-        finally:
-            if cursor: cursor.close()
+    except Exception as e:
+        conn.rollback()
+        flash(f"Error al editar paciente: {e}", "danger")
+    finally:
+        if cursor: cursor.close()
 
     return render_template('edit_patient.html', patient=patient)
 
@@ -352,11 +345,11 @@ def edit_medical_record(record_id):
             conn.commit()
             flash('Historia clínica actualizada exitosamente!', 'success')
             return redirect(url_for('patient_details', patient_id=patient_id))
-        except Exception as e:
-            conn.rollback()
-            flash(f'Error al editar historia clínica: {e}', 'danger')
-        finally:
-            if cursor: cursor.close()
+    except Exception as e:
+        conn.rollback()
+        flash(f'Error al editar historia clínica: {e}', 'danger')
+    finally:
+        if cursor: cursor.close()
 
     return render_template('edit_medical_record.html', record=record, patient=patient)
 
