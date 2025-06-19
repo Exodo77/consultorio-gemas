@@ -1,81 +1,40 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Editar Paciente: {{ patient.name }}</title>
-    <style>
-        body { font-family: sans-serif; margin: 20px; background-color: #f4f4f4; color: #333; }
-        .container { max-width: 600px; margin: 0 auto; background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        h1 { color: #0056b3; }
-        form div { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input[type="text"], input[type="date"], input[type="email"], input[type="tel"] {
-            width: calc(100% - 22px);
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 16px;
-        }
-        .button {
-            display: inline-block;
-            padding: 10px 20px;
-            background-color: #28a745;
-            color: white;
-            text-decoration: none;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-            margin-right: 10px;
-        }
-        .button:hover { background-color: #218838; }
-        .cancel-button {
-            background-color: #6c757d;
-        }
-        .cancel-button:hover {
-            background-color: #5a6268;
-        }
-        .back-link {
-            display: block;
-            margin-top: 20px;
-            color: #007bff;
-            text-decoration: none;
-        }
-        .back-link:hover { text-decoration: underline; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>Editar Paciente: {{ patient.name }}</h1>
-        <form method="post">
-            <div>
-                <label for="name">Nombre Completo:</label>
-                <input type="text" id="name" name="name" value="{{ patient.name }}" required>
-            </div>
-            <div>
-                <label for="dob">Fecha de Nacimiento:</label>
-                <input type="date" id="dob" name="dob" value="{{ patient.dob }}">
-            </div>
-            <div>
-                <label for="gender">Género:</label>
-                <input type="text" id="gender" name="gender" value="{{ patient.gender }}">
-            </div>
-            <div>
-                <label for="address">Dirección:</label>
-                <input type="text" id="address" name="address" value="{{ patient.address }}">
-            </div>
-            <div>
-                <label for="phone">Teléfono:</label>
-                <input type="tel" id="phone" name="phone" value="{{ patient.phone }}">
-            </div>
-            <div>
-                <label for="email">Email:</label>
-                <input type="email" id="email" name="email" value="{{ patient.email }}">
-            </div>
-            <button type="submit" class="button">Guardar Cambios</button>
-            <a href="{{ url_for('patient_details', patient_id=patient.id) }}" class="button cancel-button">Cancelar</a>
-        </form>
+{% extends 'base.html' %}
+
+{% block title %}Editar Paciente{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">Editar Paciente: {{ patient.name }}</h1>
+<form method="post">
+    <div class="mb-3">
+        <label for="name" class="form-label">Nombre:</label>
+        <input type="text" class="form-control" id="name" name="name" value="{{ patient.name }}" required>
     </div>
-</body>
-</html>
+    <div class="mb-3">
+        <label for="dob" class="form-label">Fecha de Nacimiento:</label>
+        <input type="date" class="form-control" id="dob" name="dob" value="{{ patient.dob }}">
+    </div>
+    <div class="mb-3">
+        <label for="gender" class="form-label">Género:</label>
+        <select class="form-select" id="gender" name="gender">
+            <option value="" {% if patient.gender == '' %}selected{% endif %}>Seleccionar</option>
+            <option value="Masculino" {% if patient.gender == 'Masculino' %}selected{% endif %}>Masculino</option>
+            <option value="Femenino" {% if patient.gender == 'Femenino' %}selected{% endif %}>Femenino</option>
+            <option value="Otro" {% if patient.gender == 'Otro' %}selected{% endif %}>Otro</option>
+        </select>
+    </div>
+    <div class="mb-3">
+        <label for="address" class="form-label">Dirección:</label>
+        <input type="text" class="form-control" id="address" name="address" value="{{ patient.address }}">
+    </div>
+    <div class="mb-3">
+        <label for="phone" class="form-label">Teléfono:</label>
+        <input type="text" class="form-control" id="phone" name="phone" value="{{ patient.phone }}">
+    </div>
+    <div class="mb-3">
+        <label for="email" class="form-label">Email:</label>
+        <input type="email" class="form-control" id="email" name="email" value="{{ patient.email }}">
+    </div>
+    <button type="submit" class="btn btn-primary">Actualizar Paciente</button>
+    <a href="{{ url_for('patient_details', patient_id=patient.id) }}" class="btn btn-secondary ms-2">Cancelar</a>
+</form>
+{% endblock %}
