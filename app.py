@@ -1,32 +1,27 @@
-from flask import Flask, render_template, request, redirect, url_for, g, session, flash # Añadir 'session' y 'flash'
+from flask import Flask, render_template, request, redirect, url_for, g, session, flash, current_app # Añadir 'current_app'
 import os
 import psycopg2
 from psycopg2.extras import RealDictCursor
-from functools import wraps # Necesario para el decorador @login_required
+from functools import wraps
 
 app = Flask(__name__)
-# --- AÑADIR CLAVE SECRETA para la gestión de sesiones de Flask ---
-# ¡IMPORTANTE! Genera una clave compleja y única para producción.
-# Por ahora, puedes usar una simple para probar, pero cámbiala.
 app.config['SECRET_KEY'] = 'una_clave_secreta_facil_de_recordar_pero_insegura_para_prod'
 
-# --- Credenciales de usuario fijas (NO SEGURO PARA PRODUCCIÓN) ---
+# --- Configuración de cuántos pacientes por página (AÑADIR ESTO) ---
+app.config['PATIENTS_PER_PAGE'] = 10 # Puedes cambiar este valor
+
 USUARIO_ADMIN = "Lucreciaco"
 PASSWORD_ADMIN = "trapos87"
 
-# --- Configuración de la base de datos ---
 DATABASE_URL = os.environ.get('DATABASE_URL')
 
 def connect_db():
     if not DATABASE_URL:
-        # Asegúrate de que esta URL funcione en tu entorno local si no usas DATABASE_URL de entorno
-        # Por ejemplo, para una DB local: 'postgresql://user:password@localhost:5432/yourdb'
-        # O la External URL de Render si tu IP está whitelisted y la necesitas
-        # Esto es solo para depuración si DATABASE_URL no está establecida.
-        # En Render, DATABASE_URL SIEMPRE estará establecida por Render.
-        print("ADVERTENCIA: DATABASE_URL no está configurada. Intentando conexión local de prueba.")
-        # Ejemplo de conexión local (MODIFICAR SEGÚN TU CONFIGURACIÓN LOCAL si no usas env var)
+        # ¡IMPORTANTE! Para pruebas locales sin DATABASE_URL,
+        # necesitarás una configuración de conexión local válida aquí.
+        # Por ejemplo:
         # return psycopg2.connect("dbname=your_local_db user=your_local_user password=your_local_pass host=localhost")
+        # Si no la tienes y ejecutas localmente sin la env var, seguirá dando error.
         raise ValueError("DATABASE_URL no está configurada. Necesaria para la conexión a PostgreSQL.")
 
     conn = psycopg2.connect(DATABASE_URL)
@@ -81,8 +76,6 @@ with app.app_context():
     except Exception as e:
         print(f"Error inicializando DB (puede que las tablas ya existan o haya otro error): {e}")
 
-
-# --- DECORADOR para requerir inicio de sesión ---
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -91,8 +84,6 @@ def login_required(f):
             return redirect(url_for('login'))
         return f(*args, **kwargs)
     return decorated_function
-
-# --- RUTAS DE AUTENTICACIÓN ---
 
 @app.route('/login', methods=('GET', 'POST'))
 def login():
@@ -106,7 +97,7 @@ def login():
             return redirect(url_for('index'))
         else:
             flash('Usuario o contraseña incorrectos.', 'danger')
-    return render_template('login.html') # Necesitarás crear este archivo
+    return render_template('login.html')
 
 @app.route('/logout')
 def logout():
@@ -114,29 +105,59 @@ def logout():
     flash('Has cerrado sesión.', 'info')
     return redirect(url_for('login'))
 
-
-# --- RUTAS EXISTENTES (ahora protegidas con @login_required) ---
-
+# --- RUTA PRINCIPAL CON PAGINACIÓN (MODIFICADA) ---
 @app.route('/')
-@login_required # <--- AÑADE ESTO para proteger la ruta
+@login_required
 def index():
     conn = get_db()
     cursor = conn.cursor()
+
+    page = request.args.get('page', 1, type=int)
+    per_page = current_app.config['PATIENTS_PER_PAGE']
+    offset = (page - 1) * per_page
     search_query = request.args.get('search', '').strip()
 
-    if search_query:
-        cursor.execute('SELECT * FROM patients WHERE LOWER(name) LIKE %s ORDER BY name',
-                       ('%' + search_query.lower() + '%',))
-    else:
-        cursor.execute('SELECT * FROM patients ORDER BY name')
+    # Construir la consulta base para contar el total de pacientes
+    count_query = "SELECT COUNT(*) FROM patients"
+    count_params = []
 
+    # Construir la consulta para obtener los pacientes de la página actual
+    patients_query = "SELECT * FROM patients"
+    patients_params = []
+
+    if search_query:
+        count_query += " WHERE LOWER(name) LIKE %s"
+        patients_query += " WHERE LOWER(name) LIKE %s"
+        search_param = '%' + search_query.lower() + '%'
+        count_params.append(search_param)
+        patients_params.append(search_param)
+
+    # Ordenar siempre por nombre para la paginación consistente
+    patients_query += " ORDER BY name LIMIT %s OFFSET %s"
+    patients_params.extend([per_page, offset])
+
+    # Ejecutar la consulta para obtener el total de pacientes (para calcular total_pages)
+    cursor.execute(count_query, count_params)
+    total_patients = cursor.fetchone()['count']
+
+    # Ejecutar la consulta para obtener los pacientes de la página actual
+    cursor.execute(patients_query, patients_params)
     patients = cursor.fetchall()
+
     cursor.close()
 
-    return render_template('index.html', patients=patients, search_query=search_query)
+    total_pages = (total_patients + per_page - 1) // per_page if total_patients > 0 else 1
+
+    return render_template('index.html',
+                           patients=patients,
+                           page=page,
+                           total_pages=total_pages,
+                           search_query=search_query)
+
+# --- RESTO DE RUTAS SIN CAMBIOS ---
 
 @app.route('/add_patient', methods=('GET', 'POST'))
-@login_required # <--- AÑADE ESTO para proteger la ruta
+@login_required
 def add_patient():
     if request.method == 'POST':
         name = request.form['name']
@@ -153,12 +174,12 @@ def add_patient():
         conn.commit()
         cursor.close()
 
-        flash('Paciente añadido exitosamente!', 'success') # Añadido flash message
+        flash('Paciente añadido exitosamente!', 'success')
         return redirect(url_for('index'))
     return render_template('add_patient.html')
 
 @app.route('/patient/<int:patient_id>')
-@login_required # <--- AÑADE ESTO para proteger la ruta
+@login_required
 def patient_details(patient_id):
     conn = get_db()
     cursor = conn.cursor()
@@ -172,14 +193,13 @@ def patient_details(patient_id):
     cursor.close()
 
     if patient is None:
-        flash('Paciente no encontrado.', 'danger') # Añadido flash message
-        return redirect(url_for('index')) # Redirige si no se encuentra
-        # return "Paciente no encontrado", 404 # Opción anterior, mejor redirigir con flash
+        flash('Paciente no encontrado.', 'danger')
+        return redirect(url_for('index'))
 
     return render_template('patient_details.html', patient=patient, medical_records=medical_records)
 
 @app.route('/add_medical_record/<int:patient_id>', methods=('GET', 'POST'))
-@login_required # <--- AÑADE ESTO para proteger la ruta
+@login_required
 def add_medical_record(patient_id):
     conn = get_db()
     cursor = conn.cursor()
@@ -189,8 +209,8 @@ def add_medical_record(patient_id):
 
     if patient is None:
         cursor.close()
-        flash('Paciente no encontrado.', 'danger') # Añadido flash message
-        return redirect(url_for('index')) # Redirige si no se encuentra
+        flash('Paciente no encontrado.', 'danger')
+        return redirect(url_for('index'))
 
     if request.method == 'POST':
         record_date = request.form['record_date']
@@ -204,14 +224,14 @@ def add_medical_record(patient_id):
         conn.commit()
         cursor.close()
 
-        flash('Historia clínica añadida exitosamente!', 'success') # Añadido flash message
+        flash('Historia clínica añadida exitosamente!', 'success')
         return redirect(url_for('patient_details', patient_id=patient_id))
 
     cursor.close()
     return render_template('add_medical_record.html', patient=patient)
 
 @app.route('/edit_patient/<int:patient_id>', methods=('GET', 'POST'))
-@login_required # <--- AÑADE ESTO para proteger la ruta
+@login_required
 def edit_patient(patient_id):
     conn = get_db()
     cursor = conn.cursor()
@@ -221,8 +241,8 @@ def edit_patient(patient_id):
 
     if patient is None:
         cursor.close()
-        flash('Paciente no encontrado.', 'danger') # Añadido flash message
-        return redirect(url_for('index')) # Redirige si no se encuentra
+        flash('Paciente no encontrado.', 'danger')
+        return redirect(url_for('index'))
 
     if request.method == 'POST':
         name = request.form['name']
@@ -239,27 +259,26 @@ def edit_patient(patient_id):
         conn.commit()
         cursor.close()
 
-        flash('Paciente actualizado exitosamente!', 'success') # Añadido flash message
+        flash('Paciente actualizado exitosamente!', 'success')
         return redirect(url_for('patient_details', patient_id=patient_id))
 
     cursor.close()
     return render_template('edit_patient.html', patient=patient)
 
 @app.route('/delete_patient/<int:patient_id>', methods=('POST',))
-@login_required # <--- AÑADE ESTO para proteger la ruta
+@login_required
 def delete_patient(patient_id):
     conn = get_db()
     cursor = conn.cursor()
 
     try:
-        # Si la base de datos tiene ON DELETE CASCADE, esta línea es redundante pero segura
         cursor.execute('DELETE FROM medical_records WHERE patient_id = %s', (patient_id,))
         cursor.execute('DELETE FROM patients WHERE id = %s', (patient_id,))
         conn.commit()
-        flash('Paciente y registros eliminados exitosamente!', 'success') # Añadido flash message
+        flash('Paciente y registros eliminados exitosamente!', 'success')
     except Exception as e:
         conn.rollback()
-        flash(f'Error al eliminar paciente: {e}', 'danger') # Añadido flash message
+        flash(f'Error al eliminar paciente: {e}', 'danger')
         print(f"Error al eliminar paciente: {e}")
     finally:
         cursor.close()
@@ -267,7 +286,7 @@ def delete_patient(patient_id):
     return redirect(url_for('index'))
 
 @app.route('/edit_medical_record/<int:record_id>', methods=('GET', 'POST'))
-@login_required # <--- AÑADE ESTO para proteger la ruta
+@login_required
 def edit_medical_record(record_id):
     conn = get_db()
     cursor = conn.cursor()
@@ -277,8 +296,8 @@ def edit_medical_record(record_id):
 
     if record is None:
         cursor.close()
-        flash('Historia clínica no encontrada.', 'danger') # Añadido flash message
-        return redirect(url_for('index')) # Redirige si no se encuentra
+        flash('Historia clínica no encontrada.', 'danger')
+        return redirect(url_for('index'))
 
     patient_id = record['patient_id']
     cursor.execute('SELECT * FROM patients WHERE id = %s', (patient_id,))
@@ -298,14 +317,14 @@ def edit_medical_record(record_id):
         conn.commit()
         cursor.close()
 
-        flash('Historia clínica actualizada exitosamente!', 'success') # Añadido flash message
+        flash('Historia clínica actualizada exitosamente!', 'success')
         return redirect(url_for('patient_details', patient_id=patient_id))
 
     cursor.close()
     return render_template('edit_medical_record.html', record=record, patient=patient)
 
 @app.route('/delete_medical_record/<int:record_id>', methods=('POST',))
-@login_required # <--- AÑADE ESTO para proteger la ruta
+@login_required
 def delete_medical_record(record_id):
     conn = get_db()
     cursor = conn.cursor()
@@ -314,18 +333,18 @@ def delete_medical_record(record_id):
     record = cursor.fetchone()
     if record is None:
         cursor.close()
-        flash('Historia clínica no encontrada.', 'danger') # Añadido flash message
-        return redirect(url_for('index')) # Redirige si no se encuentra
+        flash('Historia clínica no encontrada.', 'danger')
+        return redirect(url_for('index'))
 
     patient_id = record['patient_id']
 
     try:
         cursor.execute('DELETE FROM medical_records WHERE id = %s', (record_id,))
         conn.commit()
-        flash('Historia clínica eliminada exitosamente!', 'success') # Añadido flash message
+        flash('Historia clínica eliminada exitosamente!', 'success')
     except Exception as e:
         conn.rollback()
-        flash(f'Error al eliminar historia clínica: {e}', 'danger') # Añadido flash message
+        flash(f'Error al eliminar historia clínica: {e}', 'danger')
         print(f"Error al eliminar historia clínica: {e}")
     finally:
         cursor.close()
