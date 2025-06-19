@@ -7,6 +7,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"> {# Si tienes un CSS personalizado #}
     {% block head_extra %}{% endblock %}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
@@ -16,23 +17,31 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0"> {# Añadí me-auto mb-2 mb-lg-0 para separar la navegación a la izquierda #}
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('index') }}">Pacientes</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('add_patient') }}">Añadir Paciente</a>
                     </li>
-                    {# Nuevo enlace para Cerrar Sesión #}
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('logout') }}">Cerrar Sesión</a>
-                    </li>
+                </ul>
+                <ul class="navbar-nav"> {# Nueva ul para los elementos de la derecha, como Cerrar Sesión/Iniciar Sesión #}
+                    {% if session.get('logged_in') %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('logout') }}">Cerrar Sesión</a>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('login') }}">Iniciar Sesión</a>
+                        </li>
+                    {% endif %}
                 </ul>
             </div>
         </div>
     </nav>
     <div class="container mt-4">
-        {# BLOQUE PARA LOS FLASH MESSAGES #}
+        {# Este bloque de flash messages de Bootstrap ya NO es necesario, SweetAlert lo manejará #}
+        {#
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 <div class="row">
@@ -47,10 +56,52 @@
                 </div>
             {% endif %}
         {% endwith %}
+        #}
         {% block content %}{% endblock %}
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-    {% block scripts_extra %}{% endblock %} {# Si no necesitas script de validación aquí, déjalo vacío #}
+    
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        // Mapeo de categorías de Flask a iconos de SweetAlert2
+                        let iconType;
+                        if (category === 'success') {
+                            iconType = 'success';
+                        } else if (category === 'danger') { // Flask usa 'danger', SweetAlert usa 'error'
+                            iconType = 'error';
+                        } else if (category === 'warning') {
+                            iconType = 'warning';
+                        } else if (category === 'info' || category === 'message') { // 'message' es la categoría por defecto si no se especifica
+                            iconType = 'info';
+                        } else {
+                            iconType = 'info'; // Por defecto si no coincide
+                        }
+
+                        Swal.fire({
+                            icon: iconType,
+                            title: '{{ message | safe }}', // Usar | safe para permitir HTML si lo necesitas, aunque generalmente no se recomienda en mensajes flash.
+                            toast: true, // Hace que sea una notificación tipo "toast"
+                            position: 'top-end', // Posición en la esquina superior derecha
+                            showConfirmButton: false, // No muestra el botón de confirmación
+                            timer: 3000, // Desaparece después de 3 segundos
+                            timerProgressBar: true, // Muestra una barra de progreso para el temporizador
+                            didOpen: (toast) => {
+                                toast.addEventListener('mouseenter', Swal.stopTimer);
+                                toast.addEventListener('mouseleave', Swal.resumeTimer);
+                            }
+                        });
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        });
+    </script>
+
+    {% block scripts_extra %}{% endblock %}
 </body>
 </html>
