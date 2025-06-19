@@ -16,6 +16,7 @@ DATABASE_URL = os.environ.get('DATABASE_URL')
 
 def connect_db():
     if not DATABASE_URL:
+        # Mensaje más claro para el entorno local si DATABASE_URL no está configurada
         print("ADVERTENCIA: La variable de entorno 'DATABASE_URL' no está configurada.")
         print("Para ejecutar localmente, configúrala (ej. en PowerShell: $env:DATABASE_URL='postgres://user:pass@host:port/dbname')")
         raise ValueError("DATABASE_URL no está configurada. Necesaria para la conexión a PostgreSQL.")
@@ -106,12 +107,14 @@ def logout():
     return redirect(url_for('login'))
 
 
-# --- RUTA PRINCIPAL CON PAGINACIÓN Y ORDENAMIENTO ---
+# --- RUTA PRINCIPAL CON PAGINACIÓN ---
 @app.route('/')
 @login_required
 def index():
+    # --- CAMBIO IMPORTANTE AQUÍ: Obtener la conexión y luego el cursor ---
     conn = get_db()
     cur_db = conn.cursor()
+    # --- FIN CAMBIO ---
 
     # Parámetros de paginación
     page = request.args.get('page', 1, type=int)
@@ -120,49 +123,24 @@ def index():
 
     search_query = request.args.get('search', '').strip()
 
-    # --- NUEVOS PARÁMETROS DE ORDENAMIENTO ---
-    # Columnas válidas para ordenar
-    valid_sort_columns = ['name', 'dob', 'gender', 'phone', 'email']
-    
-    # Obtener el parámetro 'sort_by' de la URL, por defecto 'name'
-    sort_by = request.args.get('sort_by', 'name')
-    if sort_by not in valid_sort_columns:
-        sort_by = 'name' # Si el valor no es válido, usar el predeterminado
-    
-    # Obtener el parámetro 'order' de la URL, por defecto 'asc' (ascendente)
-    order = request.args.get('order', 'asc')
-    if order.lower() not in ['asc', 'desc']:
-        order = 'asc' # Si el valor no es válido, usar el predeterminado
-    # Convertir a mayúsculas para la consulta SQL
-    order = order.upper() 
-    # --- FIN NUEVOS PARÁMETROS ---
-
     try:
-        # Consulta base para contar y seleccionar pacientes
-        base_query = 'SELECT * FROM patients'
-        count_query = 'SELECT COUNT(*) FROM patients'
-        params = []
-        
-        if search_query:
-            base_query += ' WHERE LOWER(name) LIKE %s'
-            count_query += ' WHERE LOWER(name) LIKE %s'
-            params.append('%' + search_query.lower() + '%')
-
         # 1. Obtener el número total de pacientes (para calcular el total de páginas)
-        cur_db.execute(count_query, params)
+        if search_query:
+            cur_db.execute('SELECT COUNT(*) FROM patients WHERE LOWER(name) LIKE %s',
+                           ('%' + search_query.lower() + '%',))
+        else:
+            cur_db.execute('SELECT COUNT(*) FROM patients')
         total_patients = cur_db.fetchone()['count']
         total_pages = (total_patients + per_page - 1) // per_page # Cálculo para redondear hacia arriba
 
-        # 2. Obtener los pacientes para la página actual con ordenamiento y paginación
-        # Construir la parte de ORDER BY dinámicamente
-        order_by_clause = f' ORDER BY {sort_by} {order}'
-        
-        final_query = f"{base_query}{order_by_clause} LIMIT %s OFFSET %s"
-        
-        # Añadir parámetros de paginación a la lista de parámetros
-        final_params = params + [per_page, offset]
+        # 2. Obtener los pacientes para la página actual
+        if search_query:
+            cur_db.execute('SELECT * FROM patients WHERE LOWER(name) LIKE %s ORDER BY name LIMIT %s OFFSET %s',
+                           ('%' + search_query.lower() + '%', per_page, offset))
+        else:
+            cur_db.execute('SELECT * FROM patients ORDER BY name LIMIT %s OFFSET %s',
+                           (per_page, offset))
 
-        cur_db.execute(final_query, final_params)
         patients = cur_db.fetchall()
         
     except Exception as e:
@@ -171,6 +149,8 @@ def index():
         total_patients = 0
         total_pages = 0
     finally:
+        # El cursor debe cerrarse explícitamente si se abrió dentro de la función.
+        # La conexión 'conn' es gestionada por @app.teardown_appcontext.
         if cur_db:
             cur_db.close()
 
@@ -181,13 +161,9 @@ def index():
                            page=page,
                            per_page=per_page,
                            total_pages=total_pages,
-                           total_patients=total_patients,
-                           # --- PASAR NUEVOS PARÁMETROS A LA PLANTILLA ---
-                           sort_by=sort_by,
-                           order=order)
-                           # --- FIN NUEVOS PARÁMETROS ---
+                           total_patients=total_patients)
 
-# --- Resto de tus rutas (sin cambios) ---
+# --- Resto de tus rutas (sin cambios significativos, solo asegúrate de que @login_required esté ahí) ---
 
 @app.route('/add_patient', methods=('GET', 'POST'))
 @login_required
