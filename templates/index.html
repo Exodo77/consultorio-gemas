@@ -7,65 +7,95 @@
 
 <div class="row mb-3">
     <div class="col-md-6">
-        <form action="{{ url_for('index') }}" method="GET" class="d-flex">
-            <input type="text" name="search" class="form-control me-2" placeholder="Buscar paciente por nombre..." value="{{ search_query }}">
-            <button type="submit" class="btn btn-primary">Buscar</button>
+        <form class="d-flex" action="{{ url_for('index') }}" method="GET">
+            <input class="form-control me-2" type="search" placeholder="Buscar paciente por nombre..." aria-label="Search" name="search" value="{{ search_query }}">
+            <button class="btn btn-outline-primary" type="submit">Buscar</button>
         </form>
     </div>
-    <div class="col-md-6 text-md-end">
+    <div class="col-md-6 text-md-end mt-3 mt-md-0">
         <a href="{{ url_for('add_patient') }}" class="btn btn-primary">Añadir Nuevo Paciente</a>
     </div>
 </div>
 
 {% if patients %}
 <div class="table-responsive">
-    <table class="table table-striped table-hover">
+    <table class="table table-hover table-striped">
         <thead>
             <tr>
-                <th>Nombre <a href="{{ url_for('index', sort_by='name', order_by='asc', search=search_query, page=page) }}">↑</a> <a href="{{ url_for('index', sort_by='name', order_by='desc', search=search_query, page=page) }}">↓</a></th>
-                <th>Fecha de Nacimiento</th>
-                <th>Género</th>
-                <th>Teléfono</th>
-                <th>Email</th>
-                <th>Acciones</th>
+                <th>Nombre</th>
+                <th class="d-none d-md-table-cell">Fecha de Nacimiento</th> {# Ocultar en sm/xs #}
+                <th class="d-none d-md-table-cell">Género</th>           {# Ocultar en sm/xs #}
+                <th class="d-none d-md-table-cell">Teléfono</th>         {# Ocultar en sm/xs #}
+                <th class="d-none d-md-table-cell">Email</th>            {# Ocultar en sm/xs #}
+                <th class="text-center">Acciones</th>
             </tr>
         </thead>
         <tbody>
             {% for patient in patients %}
-            <tr>
+            {# Cada fila (tr) se convierte en un div en pantallas pequeñas #}
+            <tr class="d-none d-md-table-row"> {# La fila de tabla tradicional se oculta en sm/xs #}
                 <td>{{ patient.name }}</td>
                 <td>{{ patient.dob }}</td>
                 <td>{{ patient.gender }}</td>
                 <td>{{ patient.phone }}</td>
                 <td>{{ patient.email }}</td>
-                <td>
-                    <a href="{{ url_for('patient_details', patient_id=patient.id) }}" class="btn btn-info btn-sm">Detalles</a>
-                    <a href="{{ url_for('edit_patient', patient_id=patient.id) }}" class="btn btn-warning btn-sm">Editar</a>
-                    <form action="{{ url_for('delete_patient', patient_id=patient.id) }}" method="POST" style="display:inline;">
-                        <button type="button" class="btn btn-danger btn-sm delete-patient-btn" data-patient-id="{{ patient.id }}" data-patient-name="{{ patient.name }}">Eliminar</button>
-                    </form>
+                <td class="text-center">
+                    <div class="d-flex flex-column flex-md-row justify-content-center align-items-center">
+                        <a href="{{ url_for('patient_details', patient_id=patient.id) }}" class="btn btn-info btn-sm mb-1 me-md-1 w-100 w-md-auto">Detalles</a>
+                        <a href="{{ url_for('edit_patient', patient_id=patient.id) }}" class="btn btn-warning btn-sm mb-1 me-md-1 w-100 w-md-auto">Editar</a>
+                        <form action="{{ url_for('delete_patient', patient_id=patient.id) }}" method="POST" class="d-inline w-100 w-md-auto">
+                            <button type="submit" class="btn btn-danger btn-sm w-100" onclick="return confirm('¿Estás seguro de que quieres eliminar a este paciente y todos sus registros médicos? Esta acción es irreversible.');">Eliminar</button>
+                        </form>
+                    </div>
                 </td>
             </tr>
+
+            {# Comienza la "Card" para pantallas pequeñas (visible solo en sm/xs) #}
+            <div class="card mb-3 d-md-none"> {# La card se oculta en md y superiores #}
+                <div class="card-body">
+                    <h5 class="card-title">{{ patient.name }}</h5>
+                    <ul class="list-group list-group-flush mb-3">
+                        <li class="list-group-item"><strong>Fecha de Nacimiento:</strong> {{ patient.dob }}</li>
+                        <li class="list-group-item"><strong>Género:</strong> {{ patient.gender }}</li>
+                        <li class="list-group-item"><strong>Teléfono:</strong> {{ patient.phone }}</li>
+                        <li class="list-group-item"><strong>Email:</strong> {{ patient.email }}</li>
+                    </ul>
+                    <div class="d-grid gap-2"> {# d-grid gap-2 para botones apilados en card #}
+                        <a href="{{ url_for('patient_details', patient_id=patient.id) }}" class="btn btn-info">Detalles</a>
+                        <a href="{{ url_for('edit_patient', patient_id=patient.id) }}" class="btn btn-warning">Editar</a>
+                        <form action="{{ url_for('delete_patient', patient_id=patient.id) }}" method="POST">
+                            <button type="submit" class="btn btn-danger w-100" onclick="return confirm('¿Estás seguro de que quieres eliminar a este paciente y todos sus registros médicos? Esta acción es irreversible.');">Eliminar</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {# Fin de la "Card" #}
+
             {% endfor %}
         </tbody>
     </table>
 </div>
 
 {# Paginación #}
-<nav aria-label="Page navigation">
+<nav aria-label="Paginación de pacientes">
     <ul class="pagination justify-content-center">
+        {# Botón Anterior #}
         <li class="page-item {% if page == 1 %}disabled{% endif %}">
-            <a class="page-link" href="{{ url_for('index', page=page-1, search=search_query) }}" aria-label="Previous">
+            <a class="page-link" href="{{ url_for('index', page=page-1, search=search_query) }}" aria-label="Anterior">
                 <span aria-hidden="true">&laquo;</span>
             </a>
         </li>
+
+        {# Enlaces a cada página #}
         {% for p in range(1, total_pages + 1) %}
-        <li class="page-item {% if p == page %}active{% endif %}">
-            <a class="page-link" href="{{ url_for('index', page=p, search=search_query) }}">{{ p }}</a>
-        </li>
+            <li class="page-item {% if p == page %}active{% endif %}">
+                <a class="page-link" href="{{ url_for('index', page=p, search=search_query) }}">{{ p }}</a>
+            </li>
         {% endfor %}
+
+        {# Botón Siguiente #}
         <li class="page-item {% if page == total_pages %}disabled{% endif %}">
-            <a class="page-link" href="{{ url_for('index', page=page+1, search=search_query) }}" aria-label="Next">
+            <a class="page-link" href="{{ url_for('index', page=page+1, search=search_query) }}" aria-label="Siguiente">
                 <span aria-hidden="true">&raquo;</span>
             </a>
         </li>
@@ -73,40 +103,7 @@
 </nav>
 
 {% else %}
-    <p class="text-center">No hay pacientes registrados o no se encontraron resultados para la búsqueda.</p>
+    <p class="text-center">No hay pacientes registrados aún.</p>
 {% endif %}
 
-{% endblock %}
-
-{% block scripts_extra %}
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Selecciona todos los botones con la clase 'delete-patient-btn'
-    const deleteButtons = document.querySelectorAll('.delete-patient-btn');
-
-    deleteButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const patientId = this.dataset.patientId;
-            const patientName = this.dataset.patientName;
-            const form = this.closest('form'); // Obtiene el formulario padre del botón
-
-            Swal.fire({
-                title: '¿Estás seguro?',
-                html: `¿Quieres eliminar a <b>${patientName}</b> y todos sus registros médicos? <br> ¡Esta acción es irreversible!`,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33', // Rojo para el botón de confirmar eliminación
-                cancelButtonColor: '#3085d6', // Azul para el botón de cancelar
-                confirmButtonText: 'Sí, eliminar',
-                cancelButtonText: 'Cancelar'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    // Si el usuario confirma, envía el formulario
-                    form.submit();
-                }
-            });
-        });
-    });
-});
-</script>
 {% endblock %}
