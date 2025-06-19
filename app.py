@@ -5,7 +5,8 @@ from psycopg2.extras import RealDictCursor
 from functools import wraps
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'una_clave_secreta_facil_de_recordar_pero_insegura_para_prod' # ¡CAMBIA ESTO!
+# ¡IMPORTANTE! Cambia esto por una clave secreta fuerte y única en producción
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'una_clave_secreta_facil_de_recordar_pero_insegura_para_prod') 
 
 # --- Credenciales de usuario fijas (NO SEGURO PARA PRODUCCIÓN) ---
 USUARIO_ADMIN = "Lucreciaco"
@@ -64,6 +65,9 @@ def init_db_postgres():
             )
         ''')
         conn.commit()
+    except Exception as e:
+        print(f"Error inicializando DB (puede que las tablas ya existan o haya otro error): {e}")
+        # No flash aquí porque no hay contexto de request
     finally:
         cursor.close()
 
@@ -94,16 +98,16 @@ def login():
 
         if username == USUARIO_ADMIN and password == PASSWORD_ADMIN:
             session['logged_in'] = True
-            flash('¡Sesión iniciada con éxito!', 'success')
+            flash('¡Sesión iniciada con éxito!', 'success') ### CAMBIO: Categoría 'success'
             return redirect(url_for('index'))
         else:
-            flash('Usuario o contraseña incorrectos.', 'danger')
+            flash('Usuario o contraseña incorrectos.', 'danger') ### CAMBIO: Categoría 'danger'
     return render_template('login.html')
 
 @app.route('/logout')
 def logout():
     session.pop('logged_in', None)
-    flash('Has cerrado sesión.', 'info')
+    flash('Has cerrado sesión.', 'info') ### CAMBIO: Categoría 'info'
     return redirect(url_for('login'))
 
 
@@ -111,29 +115,24 @@ def logout():
 @app.route('/')
 @login_required
 def index():
-    # --- CAMBIO IMPORTANTE AQUÍ: Obtener la conexión y luego el cursor ---
     conn = get_db()
     cur_db = conn.cursor()
-    # --- FIN CAMBIO ---
 
-    # Parámetros de paginación
     page = request.args.get('page', 1, type=int)
-    per_page = 10 # Número de pacientes por página
+    per_page = 10 
     offset = (page - 1) * per_page
 
     search_query = request.args.get('search', '').strip()
 
     try:
-        # 1. Obtener el número total de pacientes (para calcular el total de páginas)
         if search_query:
             cur_db.execute('SELECT COUNT(*) FROM patients WHERE LOWER(name) LIKE %s',
                            ('%' + search_query.lower() + '%',))
         else:
             cur_db.execute('SELECT COUNT(*) FROM patients')
         total_patients = cur_db.fetchone()['count']
-        total_pages = (total_patients + per_page - 1) // per_page # Cálculo para redondear hacia arriba
+        total_pages = (total_patients + per_page - 1) // per_page 
 
-        # 2. Obtener los pacientes para la página actual
         if search_query:
             cur_db.execute('SELECT * FROM patients WHERE LOWER(name) LIKE %s ORDER BY name LIMIT %s OFFSET %s',
                            ('%' + search_query.lower() + '%', per_page, offset))
@@ -144,16 +143,13 @@ def index():
         patients = cur_db.fetchall()
         
     except Exception as e:
-        flash(f"Error al cargar pacientes: {e}", "danger")
-        patients = [] # Si hay error, la lista de pacientes estará vacía
+        flash(f"Error al cargar pacientes: {e}", "danger") ### CAMBIO: Mensaje de error con categoría 'danger'
+        patients = []
         total_patients = 0
         total_pages = 0
     finally:
-        # El cursor debe cerrarse explícitamente si se abrió dentro de la función.
-        # La conexión 'conn' es gestionada por @app.teardown_appcontext.
         if cur_db:
             cur_db.close()
-
 
     return render_template('index.html',
                            patients=patients,
@@ -163,7 +159,7 @@ def index():
                            total_pages=total_pages,
                            total_patients=total_patients)
 
-# --- Resto de tus rutas (sin cambios significativos, solo asegúrate de que @login_required esté ahí) ---
+# --- RUTAS DE GESTIÓN DE PACIENTES Y REGISTROS ---
 
 @app.route('/add_patient', methods=('GET', 'POST'))
 @login_required
@@ -182,12 +178,12 @@ def add_patient():
             cursor.execute('INSERT INTO patients (name, dob, gender, address, phone, email) VALUES (%s, %s, %s, %s, %s, %s)',
                            (name, dob, gender, address, phone, email))
             conn.commit()
-            flash('Paciente añadido exitosamente!', 'success')
+            flash('Paciente añadido exitosamente!', 'success') ### CAMBIO: Categoría 'success'
             return redirect(url_for('index'))
         except Exception as e:
             conn.rollback()
-            flash(f"Error al añadir paciente: {e}", "danger")
-            # Renderiza el formulario de nuevo con los datos ingresados
+            flash(f"Error al añadir paciente: {e}", "danger") ### CAMBIO: Mensaje de error con categoría 'danger'
+            # Renderiza el formulario de nuevo con los datos ingresados para que el usuario no pierda el input
             return render_template('add_patient.html',
                                    patient={'name': name, 'dob': dob, 'gender': gender,
                                             'address': address, 'phone': phone, 'email': email})
@@ -206,13 +202,13 @@ def patient_details(patient_id):
         patient = cursor.fetchone()
 
         if patient is None:
-            flash('Paciente no encontrado.', 'danger')
+            flash('Paciente no encontrado.', 'danger') ### CAMBIO: Categoría 'danger'
             return redirect(url_for('index'))
 
         cursor.execute('SELECT * FROM medical_records WHERE patient_id = %s ORDER BY record_date DESC', (patient_id,))
         medical_records = cursor.fetchall()
     except Exception as e:
-        flash(f"Error al cargar detalles del paciente: {e}", "danger")
+        flash(f"Error al cargar detalles del paciente: {e}", "danger") ### CAMBIO: Mensaje de error con categoría 'danger'
         patient = None
         medical_records = []
     finally:
@@ -232,7 +228,7 @@ def add_medical_record(patient_id):
         patient = cursor.fetchone()
 
         if patient is None:
-            flash('Paciente no encontrado.', 'danger')
+            flash('Paciente no encontrado.', 'danger') ### CAMBIO: Categoría 'danger'
             return redirect(url_for('index'))
 
         if request.method == 'POST':
@@ -245,14 +241,13 @@ def add_medical_record(patient_id):
             cursor.execute('INSERT INTO medical_records (patient_id, record_date, reason, diagnosis, treatment, notes) VALUES (%s, %s, %s, %s, %s, %s)',
                            (patient_id, record_date, reason, diagnosis, treatment, notes))
             conn.commit()
-            flash('Historia clínica añadida exitosamente!', 'success')
+            flash('Historia clínica añadida exitosamente!', 'success') ### CAMBIO: Categoría 'success'
             return redirect(url_for('patient_details', patient_id=patient_id))
     except Exception as e:
         conn.rollback()
-        flash(f"Error al añadir historia clínica: {e}", "danger")
+        flash(f"Error al añadir historia clínica: {e}", "danger") ### CAMBIO: Mensaje de error con categoría 'danger'
     finally:
         if cursor: cursor.close()
-        # No cierres la conexión aquí, la gestiona @app.teardown_appcontext
 
     return render_template('add_medical_record.html', patient=patient)
 
@@ -267,7 +262,7 @@ def edit_patient(patient_id):
         patient = cursor.fetchone()
 
         if patient is None:
-            flash('Paciente no encontrado.', 'danger')
+            flash('Paciente no encontrado.', 'danger') ### CAMBIO: Categoría 'danger'
             return redirect(url_for('index'))
 
         if request.method == 'POST':
@@ -283,11 +278,11 @@ def edit_patient(patient_id):
                 WHERE id = %s
             ''', (name, dob, gender, address, phone, email, patient_id))
             conn.commit()
-            flash('Paciente actualizado exitosamente!', 'success')
+            flash('Paciente actualizado exitosamente!', 'success') ### CAMBIO: Categoría 'success'
             return redirect(url_for('patient_details', patient_id=patient_id))
     except Exception as e:
         conn.rollback()
-        flash(f"Error al editar paciente: {e}", "danger")
+        flash(f"Error al editar paciente: {e}", "danger") ### CAMBIO: Mensaje de error con categoría 'danger'
     finally:
         if cursor: cursor.close()
 
@@ -303,11 +298,11 @@ def delete_patient(patient_id):
         cursor.execute('DELETE FROM medical_records WHERE patient_id = %s', (patient_id,))
         cursor.execute('DELETE FROM patients WHERE id = %s', (patient_id,))
         conn.commit()
-        flash('Paciente y registros eliminados exitosamente!', 'success')
+        flash('Paciente y registros eliminados exitosamente!', 'success') ### CAMBIO: Categoría 'success'
     except Exception as e:
         conn.rollback()
-        flash(f'Error al eliminar paciente: {e}', 'danger')
-        print(f"Error al eliminar paciente: {e}")
+        flash(f'Error al eliminar paciente: {e}', 'danger') ### CAMBIO: Mensaje de error con categoría 'danger'
+        print(f"Error al eliminar paciente: {e}") # Para depuración en consola
     finally:
         if cursor: cursor.close()
 
@@ -324,8 +319,8 @@ def edit_medical_record(record_id):
         record = cursor.fetchone()
 
         if record is None:
-            flash('Historia clínica no encontrada.', 'danger')
-            return redirect(url_for('index')) # Redirige a index si no encuentra el registro
+            flash('Historia clínica no encontrada.', 'danger') ### CAMBIO: Categoría 'danger'
+            return redirect(url_for('index')) 
 
         patient_id = record['patient_id']
         cursor.execute('SELECT * FROM patients WHERE id = %s', (patient_id,))
@@ -343,11 +338,11 @@ def edit_medical_record(record_id):
                 WHERE id = %s
             ''', (record_date, reason, diagnosis, treatment, notes, record_id))
             conn.commit()
-            flash('Historia clínica actualizada exitosamente!', 'success')
+            flash('Historia clínica actualizada exitosamente!', 'success') ### CAMBIO: Categoría 'success'
             return redirect(url_for('patient_details', patient_id=patient_id))
     except Exception as e:
         conn.rollback()
-        flash(f'Error al editar historia clínica: {e}', 'danger')
+        flash(f'Error al editar historia clínica: {e}', 'danger') ### CAMBIO: Mensaje de error con categoría 'danger'
     finally:
         if cursor: cursor.close()
 
@@ -363,18 +358,18 @@ def delete_medical_record(record_id):
         cursor.execute('SELECT patient_id FROM medical_records WHERE id = %s', (record_id,))
         record = cursor.fetchone()
         if record is None:
-            flash('Historia clínica no encontrada.', 'danger')
+            flash('Historia clínica no encontrada.', 'danger') ### CAMBIO: Categoría 'danger'
             return redirect(url_for('index'))
 
         patient_id = record['patient_id']
 
         cursor.execute('DELETE FROM medical_records WHERE id = %s', (record_id,))
         conn.commit()
-        flash('Historia clínica eliminada exitosamente!', 'success')
+        flash('Historia clínica eliminada exitosamente!', 'success') ### CAMBIO: Categoría 'success'
     except Exception as e:
         conn.rollback()
-        flash(f'Error al eliminar historia clínica: {e}', 'danger')
-        print(f"Error al eliminar historia clínica: {e}")
+        flash(f'Error al eliminar historia clínica: {e}', 'danger') ### CAMBIO: Mensaje de error con categoría 'danger'
+        print(f"Error al eliminar historia clínica: {e}") # Para depuración en consola
     finally:
         if cursor: cursor.close()
 
