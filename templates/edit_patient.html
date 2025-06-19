@@ -3,20 +3,20 @@
 {% block title %}Editar Paciente{% endblock %}
 
 {% block content %}
-<h1 class="mb-4">Editar Paciente: {{ patient.name }}</h1>
+<h2 class="mb-4">Editar Paciente: {{ patient.name }}</h2>
+
 <form method="post">
     <div class="mb-3">
-        <label for="name" class="form-label">Nombre:</label>
+        <label for="name" class="form-label">Nombre del Paciente:</label>
         <input type="text" class="form-control" id="name" name="name" value="{{ patient.name }}" required>
     </div>
     <div class="mb-3">
         <label for="dob" class="form-label">Fecha de Nacimiento:</label>
-        <input type="date" class="form-control" id="dob" name="dob" value="{{ patient.dob }}">
+        <input type="date" class="form-control" id="dob" name="dob" value="{{ patient.dob }}" required>
     </div>
     <div class="mb-3">
         <label for="gender" class="form-label">Género:</label>
-        <select class="form-select" id="gender" name="gender">
-            <option value="" {% if patient.gender == '' %}selected{% endif %}>Seleccionar</option>
+        <select class="form-select" id="gender" name="gender" required>
             <option value="Masculino" {% if patient.gender == 'Masculino' %}selected{% endif %}>Masculino</option>
             <option value="Femenino" {% if patient.gender == 'Femenino' %}selected{% endif %}>Femenino</option>
             <option value="Otro" {% if patient.gender == 'Otro' %}selected{% endif %}>Otro</option>
@@ -28,13 +28,13 @@
     </div>
     <div class="mb-3">
         <label for="phone" class="form-label">Teléfono:</label>
-        <input type="text" class="form-control" id="phone" name="phone" value="{{ patient.phone }}">
+        <input type="tel" class="form-control" id="phone" name="phone" value="{{ patient.phone }}">
     </div>
     <div class="mb-3">
         <label for="email" class="form-label">Email:</label>
         <input type="email" class="form-control" id="email" name="email" value="{{ patient.email }}">
     </div>
     <button type="submit" class="btn btn-primary">Actualizar Paciente</button>
-    <a href="{{ url_for('patient_details', patient_id=patient.id) }}" class="btn btn-secondary ms-2">Cancelar</a>
+    <a href="{{ url_for('patient_details', patient_id=patient.id) }}" class="btn btn-secondary">Cancelar</a>
 </form>
 {% endblock %}
