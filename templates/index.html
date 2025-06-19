@@ -23,23 +23,23 @@
         <thead>
             <tr>
                 <th>Nombre</th>
-                <th>Fecha de Nacimiento</th>
-                <th>Género</th>
-                <th>Teléfono</th>
-                <th>Email</th>
+                <th class="d-none d-md-table-cell">Fecha de Nacimiento</th> {# Ocultar en sm/xs #}
+                <th class="d-none d-md-table-cell">Género</th>           {# Ocultar en sm/xs #}
+                <th class="d-none d-md-table-cell">Teléfono</th>         {# Ocultar en sm/xs #}
+                <th class="d-none d-md-table-cell">Email</th>            {# Ocultar en sm/xs #}
                 <th class="text-center">Acciones</th>
             </tr>
         </thead>
         <tbody>
             {% for patient in patients %}
-            <tr>
+            {# Cada fila (tr) se convierte en un div en pantallas pequeñas #}
+            <tr class="d-none d-md-table-row"> {# La fila de tabla tradicional se oculta en sm/xs #}
                 <td>{{ patient.name }}</td>
                 <td>{{ patient.dob }}</td>
                 <td>{{ patient.gender }}</td>
                 <td>{{ patient.phone }}</td>
                 <td>{{ patient.email }}</td>
                 <td class="text-center">
-                    {# INICIO DE LA MODIFICACIÓN #}
                     <div class="d-flex flex-column flex-md-row justify-content-center align-items-center">
                         <a href="{{ url_for('patient_details', patient_id=patient.id) }}" class="btn btn-info btn-sm mb-1 me-md-1 w-100 w-md-auto">Detalles</a>
                         <a href="{{ url_for('edit_patient', patient_id=patient.id) }}" class="btn btn-warning btn-sm mb-1 me-md-1 w-100 w-md-auto">Editar</a>
@@ -47,9 +47,30 @@
                             <button type="submit" class="btn btn-danger btn-sm w-100" onclick="return confirm('¿Estás seguro de que quieres eliminar a este paciente y todos sus registros médicos? Esta acción es irreversible.');">Eliminar</button>
                         </form>
                     </div>
-                    {# FIN DE LA MODIFICACIÓN #}
                 </td>
             </tr>
+
+            {# Comienza la "Card" para pantallas pequeñas (visible solo en sm/xs) #}
+            <div class="card mb-3 d-md-none"> {# La card se oculta en md y superiores #}
+                <div class="card-body">
+                    <h5 class="card-title">{{ patient.name }}</h5>
+                    <ul class="list-group list-group-flush mb-3">
+                        <li class="list-group-item"><strong>Fecha de Nacimiento:</strong> {{ patient.dob }}</li>
+                        <li class="list-group-item"><strong>Género:</strong> {{ patient.gender }}</li>
+                        <li class="list-group-item"><strong>Teléfono:</strong> {{ patient.phone }}</li>
+                        <li class="list-group-item"><strong>Email:</strong> {{ patient.email }}</li>
+                    </ul>
+                    <div class="d-grid gap-2"> {# d-grid gap-2 para botones apilados en card #}
+                        <a href="{{ url_for('patient_details', patient_id=patient.id) }}" class="btn btn-info">Detalles</a>
+                        <a href="{{ url_for('edit_patient', patient_id=patient.id) }}" class="btn btn-warning">Editar</a>
+                        <form action="{{ url_for('delete_patient', patient_id=patient.id) }}" method="POST">
+                            <button type="submit" class="btn btn-danger w-100" onclick="return confirm('¿Estás seguro de que quieres eliminar a este paciente y todos sus registros médicos? Esta acción es irreversible.');">Eliminar</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {# Fin de la "Card" #}
+
             {% endfor %}
         </tbody>
     </table>
